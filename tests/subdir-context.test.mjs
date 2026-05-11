@@ -147,6 +147,62 @@ async function run() {
   assert.equal(persistedFiles(freshNestedViaBash.details).length, 1);
   assert.equal(persistedFiles(freshNestedViaBash.details)[0].path, "a/b/c/AGENTS.md");
 
+  await fs.mkdir(path.join(cwd, "a", "d"), { recursive: true });
+  await fs.writeFile(path.join(cwd, "a", "d", "AGENTS.md"), "D");
+
+  const freshNestedViaExecCommand = await toolResult(
+    {
+      toolName: "exec_command",
+      isError: false,
+      input: { cmd: "ls ./a/d" },
+      content: [{ type: "text", text: "listing" }],
+      details: {},
+    },
+    ctx,
+  );
+
+  assert.ok(freshNestedViaExecCommand, "exec_command with cmd should persist nested AGENTS updates");
+  assert.equal(persistedFiles(freshNestedViaExecCommand.details).length, 1);
+  assert.equal(persistedFiles(freshNestedViaExecCommand.details)[0].path, "a/d/AGENTS.md");
+
+  await fs.mkdir(path.join(cwd, "a", "e"), { recursive: true });
+  await fs.writeFile(path.join(cwd, "a", "e", "AGENTS.md"), "E");
+  await fs.writeFile(path.join(cwd, "a", "e", "file.ts"), "export const e = 1;\n");
+
+  const freshNestedViaCat = await toolResult(
+    {
+      toolName: "exec_command",
+      isError: false,
+      input: { cmd: "cat ./a/e/file.ts" },
+      content: [{ type: "text", text: "file" }],
+      details: {},
+    },
+    ctx,
+  );
+
+  assert.ok(freshNestedViaCat, "cat through exec_command should persist nested AGENTS updates");
+  assert.equal(persistedFiles(freshNestedViaCat.details).length, 1);
+  assert.equal(persistedFiles(freshNestedViaCat.details)[0].path, "a/e/AGENTS.md");
+
+  await fs.mkdir(path.join(cwd, "a", "f"), { recursive: true });
+  await fs.writeFile(path.join(cwd, "a", "f", "AGENTS.md"), "F");
+  await fs.writeFile(path.join(cwd, "a", "f", "file.ts"), "export const f = 1;\n");
+
+  const freshNestedViaSed = await toolResult(
+    {
+      toolName: "exec_command",
+      isError: false,
+      input: { cmd: "sed -n '1,5p' ./a/f/file.ts" },
+      content: [{ type: "text", text: "file" }],
+      details: {},
+    },
+    ctx,
+  );
+
+  assert.ok(freshNestedViaSed, "sed through exec_command should persist nested AGENTS updates");
+  assert.equal(persistedFiles(freshNestedViaSed.details).length, 1);
+  assert.equal(persistedFiles(freshNestedViaSed.details)[0].path, "a/f/AGENTS.md");
+
   branchEntries.push({
     type: "message",
     message: { role: "toolResult", details: freshNestedViaBash.details },

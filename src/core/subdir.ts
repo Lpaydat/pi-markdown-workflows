@@ -32,18 +32,35 @@ function isInsideRoot(rootDir: string, targetPath: string): boolean {
   return relative === "" || (!relative.startsWith("..") && !path.isAbsolute(relative));
 }
 
-function isDiscoveryBashCommand(value: string): boolean {
+function isDiscoveryShellCommand(value: string): boolean {
   const lower = value.trim().toLowerCase();
   if (!lower) return false;
   const command = lower.split(/\s+/)[0] ?? "";
-  const names = new Set(["ls", "find", "rg", "grep", "fd", "tree", "git"]);
+  const names = new Set([
+    "ls",
+    "find",
+    "rg",
+    "grep",
+    "fd",
+    "tree",
+    "cat",
+    "sed",
+    "head",
+    "tail",
+    "nl",
+    "wc",
+    "stat",
+    "file",
+    "du",
+    "git",
+  ]);
   if (command !== "git") return names.has(command);
   const parts = lower.split(/\s+/);
   const subcommand = parts[1] ?? "";
   return subcommand === "ls-files" || subcommand === "grep";
 }
 
-function bashTargets(value: string, base: string): string[] {
+function shellTargets(value: string, base: string): string[] {
   const parts = value
     .split(/\s+/)
     .map((item) => item.trim().replace(/^['"]+|['"]+$/g, ""))
@@ -212,13 +229,22 @@ export function registerSubdirContextAutoload(pi: ExtensionAPI): void {
   pi.on("tool_result", async (event, ctx) => {
     if (event.isError) return undefined;
     const isRead = event.toolName === "read";
-    const isBash = event.toolName === "bash";
-    if (!isRead && !isBash) return undefined;
+    const shellInput =
+      typeof event.input.command === "string"
+        ? event.input.command
+        : typeof event.input.cmd === "string"
+          ? event.input.cmd
+          : undefined;
+    const isShell =
+      event.toolName === "bash" ||
+      event.toolName === "exec" ||
+      event.toolName === "exec_command" ||
+      event.toolName === "shell";
+    if (!isRead && !isShell) return undefined;
     const pathInput = event.input.path as string | undefined;
-    const bashInput = event.input.command as string | undefined;
-    const isDiscoveryBash =
-      isBash && typeof bashInput === "string" && isDiscoveryBashCommand(bashInput);
-    if (!isRead && !isDiscoveryBash) return undefined;
+    const isDiscoveryShell =
+      isShell && typeof shellInput === "string" && isDiscoveryShellCommand(shellInput);
+    if (!isRead && !isDiscoveryShell) return undefined;
 
     ensureSession(ctx.cwd);
     const branchContext = collectBranchContext(ctx);
@@ -230,8 +256,8 @@ export function registerSubdirContextAutoload(pi: ExtensionAPI): void {
       ? pathInput
         ? [resolvePath(pathInput, currentCwd)]
         : []
-      : bashInput
-        ? bashTargets(bashInput, currentCwd)
+      : shellInput
+        ? shellTargets(shellInput, currentCwd)
         : [];
     if (!targets.length) return undefined;
 

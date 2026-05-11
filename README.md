@@ -13,6 +13,7 @@ A single interface powers both `/workflows` and `/skills`.
 
 - Tab between both views with `Tab` / `Shift+Tab`
 - Search, preview details, and run actions from the same UX model
+- Create skills using the bundled `skill-creator` skill
 - Keep command surface clean while still supporting advanced actions
 
 ### UI primitives SDK (npm)
@@ -51,7 +52,7 @@ This makes workflow capture deterministic and reusable across future sessions.
 The extension auto-loads nested `AGENTS.md` files when relevant files/paths are accessed.
 
 - triggers on `read`
-- also triggers for discovery/listing `bash` commands (`ls`, `find`, `rg`, `grep`, `fd`, `tree`, `git ls-files`, `git grep`)
+- also triggers for discovery/listing/read-ish shell tool commands (`bash`, `exec`, `exec_command`, `shell`) using `command` or `cmd` input (`ls`, `find`, `rg`, `grep`, `fd`, `tree`, `cat`, `sed`, `head`, `tail`, `nl`, `wc`, `stat`, `file`, `du`, `git ls-files`, `git grep`)
 - loads full nested chain (excluding cwd root `AGENTS.md` reinjection)
 - periodic refresh cadence: every **10** qualifying operations
 

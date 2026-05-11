@@ -2,6 +2,7 @@ import type { ExtensionAPI, ExtensionCommandContext } from "@earendil-works/pi-c
 import { runComposer } from "@howaboua/pi-howaboua-extensions-primitives-sdk";
 
 import { deleteSkill, discoverSkills, injectSkillUse } from "../../core/skill.js";
+import { bundledSkillPrompt } from "../../core/bundled-skill.js";
 import {
   deleteWorkflow,
   discoverWorkflows,
@@ -64,7 +65,8 @@ async function openMenu(
         extra && extra.trim()
           ? `\n\n<user_instructions>\n${extra.trim()}\n</user_instructions>`
           : "";
-      pi.sendUserMessage(`${SKILL_CREATE_PROMPT}${suffix}`);
+      const skillCreator = await bundledSkillPrompt("skill-creator");
+      pi.sendUserMessage(`${skillCreator}\n\n${SKILL_CREATE_PROMPT}${suffix}`);
       return;
     }
     if (picked.type === "skill") {
